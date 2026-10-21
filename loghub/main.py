@@ -1,73 +1,96 @@
 import re
-log = "2026-10-17 10:00:15 ERROR Database connection timeout"
-
-pattern = r"(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+(\w+)\s+(.*)"
-
-match = re.match(pattern, log)
-
-if match:
-    print(match.groups())
+import json
 
 def read_logs(file_path):
-    with open(file_path, "r", encoding="utf-8") as file: #encoding="utf-8" supports common text characters. #as file gives us a variable through which we can access the opened file.
+    with open(file_path, "r", encoding="utf-8") as file:
         logs = file.readlines()
-        return logs
-        
-        pass #The indented pass is still temporary.
+    return logs
 
 def parse_log(logs):
-    parts = logs.strip().split(" ",3)
-    return parts
+    pattern = r"(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+(\w+)\s+(.*)"
+
+    match = re.match(pattern, logs.strip())
+
+    if match:
+        return match.groups()
+
+    return None
+
 
 def json_parse_log(logs):
-    import json
     try:
         return json.loads(logs)
     except json.JSONDecodeError:
         return None
 
 def log_to_dict(parts):
-    if len(parts) < 4 :
+    if parts is None or len(parts) < 4:
         return None
-    log = { "timestamp" : f"{parts[0]} {parts[1]}" ,
-            "level" : parts[2],
-            "message" : parts[3]
-            }
-    return  log
+
+    return {
+        "timestamp": f"{parts[0]} {parts[1]}",
+        "level": parts[2],
+        "message": parts[3]
+    }
+
 
 def process_logs(logs):
     results = []
-    invalid_logs =[]
+    invalid_logs = []
+
     for log in logs:
+        if not log.strip():
+            continue
 
         if log.strip().startswith("{"):
-            #json = True
-            parsed_log= json_parse_log(log)
+            parsed_log = json_parse_log(log)
 
             if parsed_log is None:
                 invalid_logs.append({
-                "raw": log.strip(),
-                "reason": "invalid_json"
+                    "raw": log.strip(),
+                    "reason": "invalid_json"
                 })
                 continue
-            
-        else :
-            #Space_seperated = True
-            parts= parse_log(log)
+
+            # Normalize JSON fields to the same output structure.
+            if not all(key in parsed_log for key in
+                       ("timestamp", "level", "message")):
+                invalid_logs.append({
+                    "raw": log.strip(),
+                    "reason": "missing_required_json_fields"
+                })
+                continue
+
+        else:
+            parts = parse_log(log)
+
+            if parts is None:
+                invalid_logs.append({
+                    "raw": log.strip(),
+                    "reason": "unsupported_text_format"
+                })
+                continue
+
             parsed_log = log_to_dict(parts)
+
             if parsed_log is None:
                 invalid_logs.append({
-                "raw": log.strip(),
-                "reason": "invalid_text_format"
+                    "raw": log.strip(),
+                    "reason": "invalid_text_format"
                 })
                 continue
 
         results.append(parsed_log)
-    return results,invalid_logs
+
+    return results, invalid_logs
 
 
-if __name__ == "__main__":  #It means: execute this block only when the Python file is run directly, not when it is imported into another Python file.
+if __name__ == "__main__":
     logs = read_logs("data/sample_logs.log")
-    results,invalid_logs = process_logs(logs)
+    results, invalid_logs = process_logs(logs)
+
+    print("Valid logs:")
     print(results)
+
+    print("\nInvalid logs:")
     print(invalid_logs)
