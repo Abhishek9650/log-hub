@@ -5,3 +5,6 @@
 2026-10-17 10:00:20 ERROR Database connection timeout
 2026-10-17 10:00:25 INFO Request completed successfully
 2026-10-17 10:00:30 ERROR Payment service unavailable
+{this is not valid JSON}
+{"timestamp":"2026-10-17T10:00:35","level":"WARNING","message":"Memory usage high"}
+ERROR Database timeout
