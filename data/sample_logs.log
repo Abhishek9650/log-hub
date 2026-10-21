@@ -1,0 +1,7 @@
+2026-10-17 10:00:01 INFO Server started on port 5000
+2026-10-17 10:00:05 INFO User login successful
+2026-10-17 10:00:10 WARNING Database response time high
+2026-10-17 10:00:15 ERROR Database connection timeout
+2026-10-17 10:00:20 ERROR Database connection timeout
+2026-10-17 10:00:25 INFO Request completed successfully
+2026-10-17 10:00:30 ERROR Payment service unavailable
